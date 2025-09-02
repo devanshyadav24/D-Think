@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>D-Think AI Assistant</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --sidebar-bg: #1e293b;
+      --card-bg: #1e293b;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --user-msg: #334155;
+      --ai-msg: #1e293b;
+      --border: #334155;
+      --success: #22c55e;
+    }
+
+    .light-mode {
+      --bg-dark: #f8fafc;
+      --sidebar-bg: #e2e8f0;
+      --card-bg: #ffffff;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --user-msg: #cbd5e1;
+      --ai-msg: #e2e8f0;
+      --border: #cbd5e1;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #backgroundCanvas {
+      position: fixed;
+      z-index: 0;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, rgba(99, 102, 241, 0.05) 0%, transparent 100%);
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      z-index: 1;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+
+    .chat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    #chatContainer {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .message {
+      margin-bottom: 1rem;
+      padding: 1rem;
+      border-radius: 0.5rem;
+    }
+
+    .user-message {
+      background-color: var(--user-msg);
+    }
+
+    .ai-message {
+      background-color: var(--ai-msg);
+    }
+
+    .input-area {
+      display: flex;
+      align-items: center;
+      padding: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .input-box {
+      flex: 1;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border);
+      background-color: var(--card-bg);
+      color: var(--text-primary);
+    }
+
+    .send-btn {
+      margin-left: 0.5rem;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 0.5rem;
+      background-color: var(--primary);
+      color: #fff;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="backgroundCanvas"></canvas>
+  <div class="main-content">
+    <div class="chat-header">
+      <h2>D-Think AI</h2>
+      <button id="themeToggle"><i class="fas fa-moon"></i></button>
+    </div>
+    <div id="chatContainer"></div>
+    <div class="input-area">
+      <textarea class="input-box" id="userInput" placeholder="Type a message..."></textarea>
+      <button class="send-btn" id="sendButton"><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const chatContainer = document.getElementById('chatContainer');
+      const userInput = document.getElementById('userInput');
+      const sendButton = document.getElementById('sendButton');
+
+      document.getElementById('themeToggle').addEventListener('click', () => {
+        document.documentElement.classList.toggle('light-mode');
+      });
+
+      function addMessage(content, sender) {
+        const container = document.getElementById('chatContainer');
+        if (!container) {
+          console.error('chatContainer not found!');
+          return;
+        }
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender}-message`;
+        messageDiv.innerHTML = `<p>${content}</p>`;
+
+        if (sender === 'ai') {
+          const copyBtn = document.createElement('button');
+          copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+          copyBtn.onclick = () => {
+            navigator.clipboard.writeText(content);
+            copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied';
+            setTimeout(() => {
+              copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+            }, 2000);
+          };
+          messageDiv.appendChild(copyBtn);
+        }
+
+        container.appendChild(messageDiv);
+        container.scrollTop = container.scrollHeight;
+      }
+
+      function getAIResponse(message) {
+        const lowerMessage = message.toLowerCase();
+        
+        // Greetings
+        if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
+          return "Hello there! How can I assist you today?";
+        }
+        
+        // About the AI
+        if (lowerMessage.includes('who are you') || lowerMessage.includes('what are you')) {
+          return "I'm D-Think AI, your intelligent assistant designed to help with various tasks and answer your questions.";
+        }
+        
+        // Time questions
+        if (lowerMessage.includes('time') || lowerMessage.includes('date')) {
+          return "The current time is " + new Date().toLocaleTimeString() + " and the date is " + new Date().toLocaleDateString() + ".";
+        }
+        
+        // Tech questions
+        if (lowerMessage.includes('javascript') || lowerMessage.includes('js')) {
+          return "JavaScript is a programming language commonly used in web development. It allows you to implement complex features on web pages.";
+        }
+        
+        if (lowerMessage.includes('html')) {
+          return "HTML (HyperText Markup Language) is the standard markup language for documents designed to be displayed in a web browser.";
+        }
+        
+        if (lowerMessage.includes('css')) {
+          return "CSS (Cascading Style Sheets) is a style sheet language used for describing the presentation of a document written in HTML.";
+        }
+        
+        // General knowledge
+        if (lowerMessage.includes('capital of france')) {
+          return "The capital of France is Paris.";
+        }
+        
+        if (lowerMessage.includes('largest planet')) {
+          return "Jupiter is the largest planet in our solar system.";
+        }
+        
+        // Help/commands
+        if (lowerMessage.includes('help') || lowerMessage.includes('what can you do')) {
+          return "I can answer questions on various topics including technology, science, general knowledge, and more. Try asking me about programming, current time, or general facts!";
+        }
+        
+        // Default response
+        return "I'm your AI assistant. Here's a reply to your message about: " + message;
+      }
+
+      function sendMessage() {
+        const message = userInput.value.trim();
+        if (message) {
+          addMessage(message, 'user');
+          userInput.value = '';
+          setTimeout(() => {
+            const response = getAIResponse(message);
+            addMessage(response, 'ai');
+          }, 1000);
+        }
+      }
+
+      sendButton.addEventListener('click', sendMessage);
+      userInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
